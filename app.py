@@ -5,7 +5,7 @@ import calendar
 from datetime import datetime, timedelta, date
 
 # ----------------- 구글 시트 연동 헬퍼 -----------------
-LOCAL_DATA_FILE = "data.json"
+DATA_FILE = "data.json"
 
 def get_default_data():
     t_date = datetime.now().date()
