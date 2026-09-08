@@ -4,114 +4,60 @@ import os
 import calendar
 from datetime import datetime, timedelta, date
 
-# ----------------- 구글 시트 연동 헬퍼 -----------------
+# ----------------- 데이터 저장 파일 및 구글 시트 연동 -----------------
 DATA_FILE = "data.json"
-
-def get_default_data():
-    t_date = datetime.now().date()
-    return {
-        "schedules": [
-            {
-                "id": 1,
-                "title": "물리약학2",
-                "type": "보강",
-                "professor": "담당교수",
-                "date": t_date.strftime("%Y-%m-%d"),
-                "end_date": t_date.strftime("%Y-%m-%d"),
-                "is_range": False,
-                "start_period": 3,
-                "end_period": 3,
-                "building": "A3관",
-                "room_detail": "202호",
-                "room": "A3관 202호",
-                "memo": "계산기 지참"
-            },
-            {
-                "id": 2,
-                "title": "약품생화학2",
-                "type": "휴강",
-                "professor": "담당교수",
-                "date": (t_date + timedelta(days=2)).strftime("%Y-%m-%d"),
-                "end_date": (t_date + timedelta(days=2)).strftime("%Y-%m-%d"),
-                "is_range": False,
-                "start_period": 6,
-                "end_period": 7,
-                "building": "A3관",
-                "room_detail": "202호",
-                "room": "A3관 202호",
-                "memo": "학회 참석"
-            }
-        ],
-        "notes": [
-            {
-                "id": 1,
-                "title": "실험복 공동구매 건",
-                "category": "업무",
-                "content": "사이즈 취합 마감 및 업체 견적 확인",
-                "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M")
-            }
-        ]
-    }
+LOCAL_DATA_FILE = DATA_FILE
 
 def get_gspread_client():
+    """Streamlit Secrets가 설정되어 있으면 구글 시트 클라이언트를 반환"""
     if "gcp_service_account" in st.secrets and "SPREADSHEET_ID" in st.secrets:
-        import gspread
-        from oauth2client.service_account import ServiceAccountCredentials
+        try:
+            import gspread
+            from oauth2client.service_account import ServiceAccountCredentials
 
-        scope = [
-            "https://spreadsheets.google.com/feeds",
-            "https://www.googleapis.com/auth/drive"
-        ]
-        creds_dict = dict(st.secrets["gcp_service_account"])
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-        client = gspread.authorize(creds)
-        sheet = client.open_by_key(st.secrets["SPREADSHEET_ID"]).sheet1
-        return sheet
+            scope = [
+                "https://spreadsheets.google.com/feeds",
+                "https://www.googleapis.com/auth/drive"
+            ]
+            creds_dict = dict(st.secrets["gcp_service_account"])
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+            client = gspread.authorize(creds)
+            sheet = client.open_by_key(st.secrets["SPREADSHEET_ID"]).sheet1
+            return sheet
+        except Exception:
+            return None
     return None
 
-def load_data():
-    sheet = get_gspread_client()
-    # 1. 구글 시트 연결 환경인 경우
-    if sheet:
-        try:
-            val = sheet.cell(1, 1).value
-            if val:
-                return json.loads(val)
-            else:
-                default_data = get_default_data()
-                sheet.update_cell(1, 1, json.dumps(default_data, ensure_ascii=False))
-                return default_data
-        except Exception:
-            default_data = get_default_data()
-            return default_data
-
-    # 2. 로컬 테스트 환경 (data.json 사용)
-    if not os.path.exists(LOCAL_DATA_FILE):
-        d = get_default_data()
-        save_data(d)
-        return d
-    try:
-        with open(LOCAL_DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        d = get_default_data()
-        save_data(d)
-        return d
-
-def save_data(data):
-    sheet = get_gspread_client()
-    json_str = json.dumps(data, ensure_ascii=False, indent=2)
-    # 구글 시트에 업데이트
-    if sheet:
-        try:
-            sheet.update_cell(1, 1, json_str)
-            return
-        except Exception as e:
-            st.error(f"구글 시트 저장 중 오류: {e}")
-
-    # 로컬 파일에 백업 저장
-    with open(LOCAL_DATA_FILE, "w", encoding="utf-8") as f:
-        f.write(json_str)
+# ----------------- 2026-2 시간표 원본 데이터 -----------------
+TIMETABLE_2026_2 = {
+    "월": [
+        {"name": "유기약화학2", "start": 1, "end": 2},
+        {"name": "물리약학2", "start": 3, "end": 3},
+        {"name": "분자생물학", "start": 6, "end": 7},
+        {"name": "법과학분석(전선)", "start": 8, "end": 9},
+    ],
+    "화": [
+        {"name": "분자생물학", "start": 1, "end": 1},
+        {"name": "물리약학2", "start": 2, "end": 3},
+        {"name": "약품생화학2", "start": 6, "end": 7},
+        {"name": "약학실습2", "start": 8, "end": 9},
+    ],
+    "수": [
+        {"name": "약품분석학2", "start": 1, "end": 2},
+        {"name": "감염미생물학2", "start": 5, "end": 5},
+        {"name": "의약학용어(전선)", "start": 6, "end": 7},
+        {"name": "병태생리학1", "start": 8, "end": 9},
+    ],
+    "목": [
+        {"name": "약품분석학2", "start": 1, "end": 1},
+        {"name": "감염미생물학2", "start": 2, "end": 3},
+        {"name": "종양생물학(전선)", "start": 6, "end": 7},
+        {"name": "SW내분비학(전선)", "start": 8, "end": 9},
+    ],
+    "금": [
+        {"name": "약학물리학(1학년)", "start": 7, "end": 8},
+    ]
+}
 
 # ----------------- 시간표 팝업용 HTML 생성 -----------------
 def generate_timetable_html():
@@ -233,6 +179,36 @@ def get_default_data():
     }
 
 def load_data():
+    sheet = get_gspread_client()
+    # 1. 구글 시트 연동 시도
+    if sheet:
+        try:
+            val = sheet.cell(1, 1).value
+            if val and val.strip():
+                data = json.loads(val)
+                # 데이터 유효성 보정
+                for s in data.get("schedules", []):
+                    if "date" not in s:
+                        s["date"] = s.get("start", datetime.now().strftime("%Y-%m-%d"))[:10]
+                    if "end_date" not in s:
+                        s["end_date"] = s["date"]
+                    if "start_period" not in s:
+                        s["start_period"] = 1
+                    if "end_period" not in s:
+                        s["end_period"] = 2
+                    if "room" not in s:
+                        s["room"] = "A3관 202호"
+                    if "is_range" not in s:
+                        s["is_range"] = (s.get("type") == "기타" and s.get("end_date") != s["date"])
+                return data
+            else:
+                default_data = get_default_data()
+                sheet.update_cell(1, 1, json.dumps(default_data, ensure_ascii=False))
+                return default_data
+        except Exception:
+            pass
+
+    # 2. 로컬 data.json 파일 로드 (Fallback)
     if not os.path.exists(DATA_FILE):
         d = get_default_data()
         save_data(d)
@@ -260,8 +236,22 @@ def load_data():
         return d
 
 def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    sheet = get_gspread_client()
+    json_str = json.dumps(data, ensure_ascii=False, indent=2)
+    # 구글 시트에 업데이트
+    if sheet:
+        try:
+            sheet.update_cell(1, 1, json_str)
+            return
+        except Exception:
+            pass
+
+    # 로컬 data.json 백업 저장
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            f.write(json_str)
+    except Exception:
+        pass
 
 st.set_page_config(page_title="2026-2 학사 일정 포털", layout="wide", page_icon="📅")
 
@@ -411,7 +401,7 @@ with head_col_left:
         with st.container(border=True):
             c_top1, c_top2 = st.columns([8, 2])
             with c_top1:
-                st.markdown("📋 **아래 박스 우측 상단의 아이콘을 누르면 복사됩니다:**")
+                st.markdown("📋 **아래 박스 우측 상단의 복사 아이콘을 누르면 바로 복사됩니다:**")
             with c_top2:
                 if st.button("닫기", use_container_width=True):
                     st.session_state.active_notice_text = ""
@@ -673,7 +663,7 @@ if day_regular_classes:
 
 col_detail, col_add_or_edit = st.columns([3, 2])
 
-# 좌측: 해당 일자 일정 목록 (브라우저 공식 원클릭 복사 지원)
+# 좌측: 해당 일자 일정 목록
 with col_detail:
     st.markdown("#### 등록된 일정")
     target_events = []
@@ -755,8 +745,7 @@ with col_detail:
                     notice_lines.append(f"- 내용: {item.get('memo')}")
                 notice_text = "\n".join(notice_lines)
 
-                # 브라우저 보안 제약 없는 Streamlit 공식 원클릭 복사 코드 블록
-                st.caption("📋 아래 박스 오른쪽 위의 복사 버튼을 누르면 단톡에 바로 붙여넣을 수 있습니다:")
+                st.caption("📋 아래 박스 오른쪽 위의 복사 아이콘을 누르면 바로 복사됩니다:")
                 st.code(notice_text, language="text")
 
 # 우측: 일정 등록 및 수정
