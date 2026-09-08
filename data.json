@@ -1,0 +1,59 @@
+{
+  "schedules": [
+    {
+      "id": 1,
+      "title": "분자생물학",
+      "type": "휴강",
+      "professor": "박하현",
+      "date": "2026-09-15",
+      "start_period": 1,
+      "end_period": 1,
+      "building": "A3관",
+      "room_detail": "202호",
+      "room": "A3관 202호",
+      "memo": ""
+    },
+    {
+      "id": 2,
+      "title": "분자생물학",
+      "type": "보강",
+      "professor": "박하현",
+      "date": "2026-10-21",
+      "start_period": 5,
+      "end_period": 5,
+      "building": "A3관",
+      "room_detail": "202호",
+      "room": "A3관 202호",
+      "memo": ""
+    },
+    {
+      "id": 3,
+      "title": "유기약화학II",
+      "type": "과제",
+      "professor": "하형호",
+      "date": "2026-09-14",
+      "start_period": 1,
+      "end_period": 2,
+      "building": "A3관",
+      "room_detail": "202호",
+      "room": "A3관 202호",
+      "memo": "저번 학기 내용 복습(A4 한페이지)\n8시 50분 과대 책상에 제출",
+      "is_range": false
+    },
+    {
+      "id": 4,
+      "title": "병태생리학1",
+      "type": "시험",
+      "professor": "김항건",
+      "date": "2026-09-09",
+      "start_period": 8,
+      "end_period": 9,
+      "building": "A3관",
+      "room_detail": "202호",
+      "room": "A3관 202호",
+      "memo": "오픈북 테스트(책 지참)",
+      "is_range": false
+    }
+  ],
+  "notes": []
+}
