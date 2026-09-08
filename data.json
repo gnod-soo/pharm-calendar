@@ -11,7 +11,9 @@
       "building": "A3관",
       "room_detail": "202호",
       "room": "A3관 202호",
-      "memo": ""
+      "memo": "",
+      "end_date": "2026-09-15",
+      "is_range": false
     },
     {
       "id": 2,
@@ -24,7 +26,9 @@
       "building": "A3관",
       "room_detail": "202호",
       "room": "A3관 202호",
-      "memo": ""
+      "memo": "",
+      "end_date": "2026-10-21",
+      "is_range": false
     },
     {
       "id": 3,
@@ -38,7 +42,8 @@
       "room_detail": "202호",
       "room": "A3관 202호",
       "memo": "저번 학기 내용 복습(A4 한페이지)\n8시 50분 과대 책상에 제출",
-      "is_range": false
+      "is_range": false,
+      "end_date": "2026-09-14"
     },
     {
       "id": 4,
@@ -52,7 +57,21 @@
       "room_detail": "202호",
       "room": "A3관 202호",
       "memo": "오픈북 테스트(책 지참)",
-      "is_range": false
+      "is_range": false,
+      "end_date": "2026-09-09"
+    },
+    {
+      "id": 5,
+      "title": "분자생물학",
+      "type": "보강",
+      "professor": "박하현",
+      "date": "2026-09-21",
+      "end_date": "2026-09-21",
+      "is_range": false,
+      "start_period": 5,
+      "end_period": 5,
+      "room": "A3관 202호",
+      "memo": ""
     }
   ],
   "notes": []

@@ -4,38 +4,114 @@ import os
 import calendar
 from datetime import datetime, timedelta, date
 
-DATA_FILE = "data.json"
+# ----------------- 구글 시트 연동 헬퍼 -----------------
+LOCAL_DATA_FILE = "data.json"
 
-# ----------------- 2026-2 시간표 원본 데이터 -----------------
-TIMETABLE_2026_2 = {
-    "월": [
-        {"name": "유기약화학2", "start": 1, "end": 2},
-        {"name": "물리약학2", "start": 3, "end": 3},
-        {"name": "분자생물학", "start": 6, "end": 7},
-        {"name": "법과학분석(전선)", "start": 8, "end": 9},
-    ],
-    "화": [
-        {"name": "분자생물학", "start": 1, "end": 1},
-        {"name": "물리약학2", "start": 2, "end": 3},
-        {"name": "약품생화학2", "start": 6, "end": 7},
-        {"name": "약학실습2", "start": 8, "end": 9},
-    ],
-    "수": [
-        {"name": "약품분석학2", "start": 1, "end": 2},
-        {"name": "감염미생물학2", "start": 5, "end": 5},
-        {"name": "의약학용어(전선)", "start": 6, "end": 7},
-        {"name": "병태생리학1", "start": 8, "end": 9},
-    ],
-    "목": [
-        {"name": "약품분석학2", "start": 1, "end": 1},
-        {"name": "감염미생물학2", "start": 2, "end": 3},
-        {"name": "종양생물학(전선)", "start": 6, "end": 7},
-        {"name": "SW내분비학(전선)", "start": 8, "end": 9},
-    ],
-    "금": [
-        {"name": "약학물리학(1학년)", "start": 7, "end": 8},
-    ]
-}
+def get_default_data():
+    t_date = datetime.now().date()
+    return {
+        "schedules": [
+            {
+                "id": 1,
+                "title": "물리약학2",
+                "type": "보강",
+                "professor": "담당교수",
+                "date": t_date.strftime("%Y-%m-%d"),
+                "end_date": t_date.strftime("%Y-%m-%d"),
+                "is_range": False,
+                "start_period": 3,
+                "end_period": 3,
+                "building": "A3관",
+                "room_detail": "202호",
+                "room": "A3관 202호",
+                "memo": "계산기 지참"
+            },
+            {
+                "id": 2,
+                "title": "약품생화학2",
+                "type": "휴강",
+                "professor": "담당교수",
+                "date": (t_date + timedelta(days=2)).strftime("%Y-%m-%d"),
+                "end_date": (t_date + timedelta(days=2)).strftime("%Y-%m-%d"),
+                "is_range": False,
+                "start_period": 6,
+                "end_period": 7,
+                "building": "A3관",
+                "room_detail": "202호",
+                "room": "A3관 202호",
+                "memo": "학회 참석"
+            }
+        ],
+        "notes": [
+            {
+                "id": 1,
+                "title": "실험복 공동구매 건",
+                "category": "업무",
+                "content": "사이즈 취합 마감 및 업체 견적 확인",
+                "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M")
+            }
+        ]
+    }
+
+def get_gspread_client():
+    if "gcp_service_account" in st.secrets and "SPREADSHEET_ID" in st.secrets:
+        import gspread
+        from oauth2client.service_account import ServiceAccountCredentials
+
+        scope = [
+            "https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+        client = gspread.authorize(creds)
+        sheet = client.open_by_key(st.secrets["SPREADSHEET_ID"]).sheet1
+        return sheet
+    return None
+
+def load_data():
+    sheet = get_gspread_client()
+    # 1. 구글 시트 연결 환경인 경우
+    if sheet:
+        try:
+            val = sheet.cell(1, 1).value
+            if val:
+                return json.loads(val)
+            else:
+                default_data = get_default_data()
+                sheet.update_cell(1, 1, json.dumps(default_data, ensure_ascii=False))
+                return default_data
+        except Exception:
+            default_data = get_default_data()
+            return default_data
+
+    # 2. 로컬 테스트 환경 (data.json 사용)
+    if not os.path.exists(LOCAL_DATA_FILE):
+        d = get_default_data()
+        save_data(d)
+        return d
+    try:
+        with open(LOCAL_DATA_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        d = get_default_data()
+        save_data(d)
+        return d
+
+def save_data(data):
+    sheet = get_gspread_client()
+    json_str = json.dumps(data, ensure_ascii=False, indent=2)
+    # 구글 시트에 업데이트
+    if sheet:
+        try:
+            sheet.update_cell(1, 1, json_str)
+            return
+        except Exception as e:
+            st.error(f"구글 시트 저장 중 오류: {e}")
+
+    # 로컬 파일에 백업 저장
+    with open(LOCAL_DATA_FILE, "w", encoding="utf-8") as f:
+        f.write(json_str)
 
 # ----------------- 시간표 팝업용 HTML 생성 -----------------
 def generate_timetable_html():
